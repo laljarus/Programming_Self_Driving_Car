@@ -54,11 +54,28 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `Controller` object
-        # self.controller = Controller(<Arguments you wish to provide>)
+        self.controller = Controller()
 
         # TODO: Subscribe to all the topics you need to
+        rospy.Subscriber('/twist_cmd',TwistStamped,self.twist_cmd_cb)
+        rospy.Subscriber('/current_velocity',TwistStamped,self.current_velocity_cb)
+        rospy.Subscriber('/vehicle/dbw_enabled',Bool,self.dbw_enabled_cb)
+
+        self.dbw_enabled = False
+        
+        self.current_x_dot = None
+        self.current_y_dot = None
+        #self.current_z_dot = None        
+        self.current_yaw_rate = None
+
+        self.cmd_x_dot = None
+        self.cmd_y_dot = None
+        #self.cmd_z_dot = None
+        self.cmd_yaw_rate = None
+
 
         self.loop()
+        
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -70,9 +87,25 @@ class DBWNode(object):
             #                                                     <current linear velocity>,
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
-            # if <dbw is enabled>:
-            #   self.publish(throttle, brake, steer)
+            
+            throttle,brake,steer = self.controller.control()
+
+            if self.dbw_enabled:
+                self.publish(throttle, brake, steer)
             rate.sleep()
+
+    def dbw_enabled_cb(self,dbw_enabled):
+        self.dbw_enabled = dbw_enabled
+
+    def current_velocity_cb(self,msg):
+        self.current_x_dot = msg.twist.linear.x
+        self.current_y_dot = msg.twist.linear.y
+        self.current_yaw_rate = msg.twist.angular.z
+
+    def twist_cmd_cb(self,msg):
+        self.cmd_x_dot = msg.twist.linear.x
+        self.cmd_y_dot = msg.twist.linear.y
+        self.cmd_yaw_rate = msg.twist.angular.z
 
     def publish(self, throttle, brake, steer):
         tcmd = ThrottleCmd()

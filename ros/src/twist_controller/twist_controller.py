@@ -2,6 +2,8 @@
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 
+from pid import PID
+from lowpass import LowPassFilter
 
 class Controller(object):
     def __init__(self, *args, **kwargs):
