@@ -91,7 +91,7 @@ class DBWNode(object):
             if not None in (self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot):
                 
             
-                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.dbw_enabled)
+                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.current_yaw_rate,self.dbw_enabled)
 
             if self.dbw_enabled:
                 self.publish(throttle, brake, steer)

@@ -17,15 +17,13 @@ class Controller(object):
         self.max_lat_acc 		= max_lat_acc
         self.max_steer_angle		= max_steer_angle
 
-        self.kp_lon				= 0.2
+        self.kp_lon				= 0.1
         self.kd_lon				= 0.02
         self.ki_lon				= 0
 
-        self.kp_lat				= 0
-        self.kd_lat				= 0
-        self.ki_lat				= 0
-
-        self.steer 				= 0
+        self.kp_lat				= 0.1
+        self.kd_lat				= 0.05
+        self.ki_lat				= 0        
 
         self.tau_vel_filt 			= 0.3
         self.ts 				= 1/20.0  # sample time
@@ -35,6 +33,7 @@ class Controller(object):
 
         self.vel_low_pass_filt  = LowPassFilter(self.tau_vel_filt,self.ts)
 	self.pid_lon 		= PID(self.kp_lon,self.ki_lon,self.kd_lon,self.min_throttle,self.max_throttle)
+        self.pid_lat            = PID(self.kp_lat,self.ki_lat,self.kd_lat,-self.max_steer_angle,self.max_steer_angle)
 
 	self.last_time 		= 0	
 	self.decel_limit 	= decel_limit
@@ -46,12 +45,12 @@ class Controller(object):
 
         self.YawController = YawController(self.wheel_base,self.steer_ratio,self.min_speed,self.max_lat_acc,self.max_steer_angle)
 
-    def control(self, cmd_x_dot,cmd_yaw_rate,act_x_dot,dbw_enabled):
+    def control(self, cmd_x_dot,cmd_yaw_rate,act_x_dot,act_yaw_rate,dbw_enabled):
         # TODO: Change the arg, kwarg list to suit your needs
         
         act_x_dot = self.vel_low_pass_filt.filt(act_x_dot)
 
-        self.steer = self.YawController.get_steering(cmd_x_dot,cmd_yaw_rate,act_x_dot)
+        steer = self.YawController.get_steering(cmd_x_dot,cmd_yaw_rate,act_x_dot)
 
 	if not dbw_enabled:
 		self.pid_lon.reset()
@@ -60,9 +59,14 @@ class Controller(object):
 	speed_error = cmd_x_dot - act_x_dot
 	current_time = rospy.get_time()
 	sample_time = current_time - self.last_time
+
+        yaw_rate_err = cmd_yaw_rate - act_yaw_rate
 	
-	throttle = self.pid_lon.step(speed_error,sample_time)
+	throttle = self.pid_lon.step(speed_error,sample_time,0.)
 	brake = 0.
+
+        steer = self.pid_lat.step(yaw_rate_err,sample_time,steer)
+        
 	
 	if cmd_x_dot == 0. and act_x_dot < 0.1:
 		throttle = 0.
@@ -75,4 +79,4 @@ class Controller(object):
 
 
         # Return throttle, brake, steer
-        return throttle, brake, self.steer
+        return 0.1, 0., steer
