@@ -53,15 +53,7 @@ class DBWNode(object):
         self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
                                          BrakeCmd, queue_size=1)
 
-        # TODO: Create `Controller` object
-        self.controller = Controller(wheel_base,steer_ratio,max_lat_accel,max_steer_angle)
-
-        # TODO: Subscribe to all the topics you need to
-        rospy.Subscriber('/twist_cmd',TwistStamped,self.twist_cmd_cb)
-        rospy.Subscriber('/current_velocity',TwistStamped,self.current_velocity_cb)
-        rospy.Subscriber('/vehicle/dbw_enabled',Bool,self.dbw_enabled_cb)
-
-        self.dbw_enabled = False
+	self.dbw_enabled = False
         
         self.current_x_dot = None
         self.current_y_dot = None
@@ -72,6 +64,14 @@ class DBWNode(object):
         self.cmd_y_dot = None
         #self.cmd_z_dot = None
         self.cmd_yaw_rate = None
+
+        # TODO: Create `Controller` object
+        self.controller = Controller(wheel_base,steer_ratio,max_lat_accel,max_steer_angle,decel_limit,vehicle_mass,wheel_radius)
+
+        # TODO: Subscribe to all the topics you need to
+        rospy.Subscriber('/twist_cmd',TwistStamped,self.twist_cmd_cb)
+        rospy.Subscriber('/current_velocity',TwistStamped,self.current_velocity_cb)
+        rospy.Subscriber('/vehicle/dbw_enabled',Bool,self.dbw_enabled_cb)       
 
 
         self.loop()
@@ -91,7 +91,7 @@ class DBWNode(object):
             if not None in (self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot):
                 
             
-                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot)
+                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.dbw_enabled)
 
             if self.dbw_enabled:
                 self.publish(throttle, brake, steer)
