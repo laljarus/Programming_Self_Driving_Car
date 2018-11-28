@@ -64,12 +64,12 @@ class DBWNode(object):
         self.dbw_enabled = False
         
         self.current_x_dot = None
-        self.current_y_dot = None
+        #self.current_y_dot = None
         #self.current_z_dot = None        
         self.current_yaw_rate = None
 
         self.cmd_x_dot = None
-        self.cmd_y_dot = None
+        #self.cmd_y_dot = None
         #self.cmd_z_dot = None
         self.cmd_yaw_rate = None
 
@@ -91,7 +91,7 @@ class DBWNode(object):
             if not None in (self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot):
                 
             
-                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot)
+                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.current_yaw_rate,self.dbw_enabled)
 
             if self.dbw_enabled:
                 self.publish(throttle, brake, steer)
@@ -103,12 +103,12 @@ class DBWNode(object):
 
     def current_velocity_cb(self,msg):
         self.current_x_dot = msg.twist.linear.x
-        self.current_y_dot = msg.twist.linear.y
+        #self.current_y_dot = msg.twist.linear.y
         self.current_yaw_rate = msg.twist.angular.z
 
     def twist_cmd_cb(self,msg):
         self.cmd_x_dot = msg.twist.linear.x
-        self.cmd_y_dot = msg.twist.linear.y
+        #self.cmd_y_dot = msg.twist.linear.y
         self.cmd_yaw_rate = msg.twist.angular.z
 
     def publish(self, throttle, brake, steer):
