@@ -21,7 +21,7 @@ class Controller(object):
         self.ki_lon				= 0
 
         self.kp_lat				= -1
-        self.kd_lat				= 0
+        self.kd_lat				= -0.1
         self.ki_lat				= 0
 
         self.steer 				= 0
