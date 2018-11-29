@@ -57,4 +57,4 @@ class Controller(object):
 
 
         # Return throttle, brake, steer
-        return 0.2, 0., steer_ff
+        return 0.5, 0., steer_ff
