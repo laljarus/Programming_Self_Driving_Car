@@ -1,34 +1,30 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool,Float64
 from dbw_mkz_msgs.msg import ThrottleCmd, SteeringCmd, BrakeCmd, SteeringReport
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import TwistStamped,PoseStamped
+from styx_msgs.msg import Lane,Waypoint
 import math
+import numpy as np
 
 from twist_controller import Controller
 
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
-
 You will subscribe to `/twist_cmd` message which provides the proposed linear and angular velocities.
 You can subscribe to any other message that you find important or refer to the document for list
 of messages subscribed to by the reference implementation of this node.
-
 One thing to keep in mind while building this node and the `twist_controller` class is the status
 of `dbw_enabled`. While in the simulator, its enabled all the time, in the real car, that will
 not be the case. This may cause your PID controller to accumulate error because the car could
 temporarily be driven by a human instead of your controller.
-
 We have provided two launch files with this node. Vehicle specific values (like vehicle_mass,
 wheel_base) etc should not be altered in these files.
-
 We have also provided some reference implementations for PID controller and other utility classes.
 You are free to use them or build your own.
-
 Once you have the proposed throttle, brake, and steer values, publish it on the various publishers
 that we have created in the `__init__` function.
-
 '''
 
 class DBWNode(object):
@@ -52,6 +48,7 @@ class DBWNode(object):
                                             ThrottleCmd, queue_size=1)
         self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
                                          BrakeCmd, queue_size=1)
+	#self.cte_pub = rospy.Publisher('/cross_track_error',Float64,queue_size =1)
 
         # TODO: Create `Controller` object
         self.controller = Controller(wheel_base,steer_ratio,max_lat_accel,max_steer_angle)
@@ -60,12 +57,14 @@ class DBWNode(object):
         rospy.Subscriber('/twist_cmd',TwistStamped,self.twist_cmd_cb)
         rospy.Subscriber('/current_velocity',TwistStamped,self.current_velocity_cb)
         rospy.Subscriber('/vehicle/dbw_enabled',Bool,self.dbw_enabled_cb)
+	#rospy.Subscriber('/final_waypoints',Lane,self.final_waypoints_cb)
+	rospy.Subscriber('/cross_track_error',Float64,self.cte_cb)
 
         self.dbw_enabled = False
-        
+
         self.current_x_dot = None
-        #self.current_y_dot = None
-        #self.current_z_dot = None        
+        self.current_y_dot = None
+        #self.current_z_dot = None
         self.current_yaw_rate = None
 
         self.cmd_x_dot = None
@@ -73,9 +72,10 @@ class DBWNode(object):
         #self.cmd_z_dot = None
         self.cmd_yaw_rate = None
 
+	self.cte = 0.
 
         self.loop()
-        
+
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -89,12 +89,26 @@ class DBWNode(object):
             #                                                     <any other argument you need>)
 
             if not None in (self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot):
-                
-            
-                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.current_yaw_rate,self.dbw_enabled)
+
+                throttle,brake,steer = self.controller.control(self.cmd_x_dot,self.cmd_yaw_rate,self.current_x_dot,self.cte,self.dbw_enabled)
+		"""	
+		waypoints_x = np.array(self.waypoints_x)
+		waypoints_y = np.array(self.waypoints_y)
+		yaw = np.arctan2(self.current_y_dot,self.current_x_dot)
+		# waypoints in intertial frame with respect to car position
+		waypoints_x_i = waypoints_x - self.pose_x
+		waypoints_y_i = waypoints_x - self.pose_y
+		# waypoints in car body centric frame
+		waypoints_x_b = np.cos(yaw)*waypoints_x_i + np.sin(yaw)*waypoints_y_i
+		waypoints_y_b = -np.sin(yaw)*waypoints_x_i + np.cos(yaw)*waypoints_y_i
+
+		coeffs = np.polyfit(waypoints_x_b,waypoints_y_b,2)
+		cte =  np.polyval(coeffs,0)
+		self.cte_pub.publish(cte)"""
+
 
             if self.dbw_enabled:
-                self.publish(throttle, brake, steer)
+		self.publish(throttle, brake, steer)
 
             rate.sleep()
 
@@ -103,13 +117,24 @@ class DBWNode(object):
 
     def current_velocity_cb(self,msg):
         self.current_x_dot = msg.twist.linear.x
-        #self.current_y_dot = msg.twist.linear.y
+        self.current_y_dot = msg.twist.linear.y
         self.current_yaw_rate = msg.twist.angular.z
 
     def twist_cmd_cb(self,msg):
         self.cmd_x_dot = msg.twist.linear.x
         #self.cmd_y_dot = msg.twist.linear.y
         self.cmd_yaw_rate = msg.twist.angular.z
+    """	
+    def final_waypoints_cb(self,msg):
+	self.waypoints_x = [waypoint.pose.pose.position.x for waypoint in msg.waypoints]
+	self.waypoints_y = [waypoint.pose.pose.position.y for waypoint in msg.waypoints]
+
+    def pose_cb(self,msg):
+	self.pose_x = msg.pose.position.x
+	self.pose_y = msg.pose.position.y
+    """
+    def cte_cb(self,msg):
+	self.cte = msg.data
 
     def publish(self, throttle, brake, steer):
         tcmd = ThrottleCmd()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+from std_msgs.msg import Float64
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from scipy.spatial import KDTree
@@ -37,6 +38,7 @@ class WaypointUpdater(object):
 
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+	self.cte_pub 		 = rospy.Publisher('cross_track_error',Float64,queue_size=1)
 
         # TODO: Add other member variables you need below
 
@@ -44,6 +46,7 @@ class WaypointUpdater(object):
         self.base_waypoints = None
         self.waypoints_2d = None
         self.waypoints_tree = None
+	self.cte = None
 
 
         self.loop()
@@ -54,6 +57,7 @@ class WaypointUpdater(object):
             if self.pose and self.base_waypoints:
                 closest_waypoint_idx = self.get_closest_waypoint_idx()
                 self.publish_waypoints(closest_waypoint_idx)
+		self.cte_pub.publish(self.cte)
             rate.sleep()
     def get_closest_waypoint_idx(self):
 
@@ -68,9 +72,31 @@ class WaypointUpdater(object):
         prev_vector = np.array(prev_coord)
         pos_vector = np.array([x,y])
 
-        val = np.dot(cl_vector - prev_vector, pos_vector - cl_vector)
+	vect_1 = cl_vector - prev_vector
+	vect_2 = pos_vector - cl_vector
+	vect_3 = pos_vector - prev_vector
 
-        if val > 0:
+	ang_vect_1 = np.arctan2(vect_1[1],vect_1[0])
+	ang_vect_3 = np.arctan2(vect_3[1],vect_3[0])
+
+        dot_prod = np.dot(cl_vector - prev_vector, pos_vector - cl_vector)
+
+	mag_vect_1 = np.linalg.norm(vect_1)
+	mag_vect_2 = np.linalg.norm(vect_2)
+
+	# angle between two vectors
+	theta = np.arccos( dot_prod/(mag_vect_1*mag_vect_2))
+
+	mag_cte   = np.sin(theta)*mag_vect_2
+
+	if ang_vect_1 > ang_vect_3:
+		sign_cte = -1
+	else:
+		sign_cte = 1
+
+	self.cte = mag_cte*sign_cte
+
+        if dot_prod > 0:
             closest_idx = (closest_idx + 1) % len(self.waypoints_2d)
 
         return closest_idx
