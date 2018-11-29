@@ -20,7 +20,7 @@ class Controller(object):
         self.kd_lon				= 0
         self.ki_lon				= 0
 
-        self.kp_lat				= -0.01
+        self.kp_lat				= -1
         self.kd_lat				= 0
         self.ki_lat				= 0
 
