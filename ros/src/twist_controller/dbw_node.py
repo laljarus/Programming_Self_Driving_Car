@@ -48,17 +48,17 @@ class DBWNode(object):
                                             ThrottleCmd, queue_size=1)
         self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
                                          BrakeCmd, queue_size=1)
-	#self.cte_pub = rospy.Publisher('/cross_track_error',Float64,queue_size =1)
+	    #self.cte_pub = rospy.Publisher('/cross_track_error',Float64,queue_size =1)
 
         # TODO: Create `Controller` object
-        self.controller = Controller(wheel_base,steer_ratio,max_lat_accel,max_steer_angle)
+        self.controller = Controller(wheel_base,steer_ratio,max_lat_accel,max_steer_angle,decel_limit,vehicle_mass,wheel_radius)
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd',TwistStamped,self.twist_cmd_cb)
         rospy.Subscriber('/current_velocity',TwistStamped,self.current_velocity_cb)
         rospy.Subscriber('/vehicle/dbw_enabled',Bool,self.dbw_enabled_cb)
-	#rospy.Subscriber('/final_waypoints',Lane,self.final_waypoints_cb)
-	rospy.Subscriber('/cross_track_error',Float64,self.cte_cb)
+	    #rospy.Subscriber('/final_waypoints',Lane,self.final_waypoints_cb)
+        rospy.Subscriber('/cross_track_error',Float64,self.cte_cb)
 
         self.dbw_enabled = False
 
@@ -108,7 +108,7 @@ class DBWNode(object):
 
 
             if self.dbw_enabled:
-		self.publish(throttle, brake, steer)
+		      self.publish(throttle, brake, steer)
 
             rate.sleep()
 
