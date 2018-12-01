@@ -72,29 +72,27 @@ class WaypointUpdater(object):
         prev_vector = np.array(prev_coord)
         pos_vector = np.array([x,y])
 
-	vect_1 = cl_vector - prev_vector
-	vect_2 = pos_vector - cl_vector
-	vect_3 = pos_vector - prev_vector
+        vect_1 = cl_vector - prev_vector
+        vect_2 = pos_vector - cl_vector
+        vect_3 = pos_vector - prev_vector
 
-	ang_vect_1 = np.arctan2(vect_1[1],vect_1[0])
-	ang_vect_3 = np.arctan2(vect_3[1],vect_3[0])
+        ang_vect_1 = np.arctan2(vect_1[1],vect_1[0])
+        ang_vect_3 = np.arctan2(vect_3[1],vect_3[0])
 
         dot_prod = np.dot(cl_vector - prev_vector, pos_vector - cl_vector)
 
-	mag_vect_1 = np.linalg.norm(vect_1)
-	mag_vect_2 = np.linalg.norm(vect_2)
+        mag_vect_1 = np.linalg.norm(vect_1)
+        mag_vect_2 = np.linalg.norm(vect_2)     
+        # angle between two vectors
 
-	# angle between two vectors
-	theta = np.arccos( dot_prod/(mag_vect_1*mag_vect_2))
-
-	mag_cte   = np.sin(theta)*mag_vect_2
-
-	if ang_vect_1 > ang_vect_3:
-		sign_cte = -1
-	else:
-		sign_cte = 1
-
-	self.cte = mag_cte*sign_cte
+        theta = np.arccos( dot_prod/(mag_vect_1*mag_vect_2))        
+        mag_cte   = np.sin(theta)*mag_vect_2
+                
+        if ang_vect_1 > ang_vect_3:
+        	sign_cte = -1
+        else:
+        	sign_cte = 1       
+        self.cte = mag_cte*sign_cte
 
         if dot_prod > 0:
             closest_idx = (closest_idx + 1) % len(self.waypoints_2d)
