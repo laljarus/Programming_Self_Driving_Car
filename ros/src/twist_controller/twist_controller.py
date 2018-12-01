@@ -16,11 +16,11 @@ class Controller(object):
         self.max_steer_angle	= max_steer_angle
 
         self.kp_lon				= 0.2
-        self.kd_lon				= 0
-        self.ki_lon				= 0.05
+        self.kd_lon				= 0.05
+        self.ki_lon				= 0.
 
-        self.kp_lat				= -0.6
-        self.kd_lat				= -0.2
+        self.kp_lat				= -1
+        self.kd_lat				= -0.5
         self.ki_lat				= 0
         
         self.min_throttle       = decel_limit
@@ -80,4 +80,4 @@ class Controller(object):
 
 
         # Return throttle, brake, steer
-        return throttle, brake, steer
+        return throttle, brake, steer_ff
