@@ -21,9 +21,9 @@ class Controller(object):
         self.kd_lon				= 0.05
         self.ki_lon				= 0.
 
-        self.kp_lat				= 0.2 
-        self.kd_lat				= 0.05
-        self.ki_lat				= 0        
+        self.kp_lat				= 0.
+        self.kd_lat				= 0.
+        self.ki_lat				= 0.1        
 
         self.tau_vel_filt 			= 0.3
         self.ts 				    = 1/20.0  # sample time
@@ -73,10 +73,9 @@ class Controller(object):
         elif throttle < 0. and speed_error < 0.:
 		    #throttle = throttle*abs(self.decel_limit)
 		    #decel = max(speed_error,self.decel_limit)
-		    brake = abs(throttle)*self.vehicle_mass*self.wheel_radius
-            throttle = 0.
-		
+            brake = abs(throttle)*self.vehicle_mass*self.wheel_radius
+            throttle = 0.	
 
 
         # Return throttle, brake, steer
-        return throttle, brake, steer
+        return throttle, brake, steer_ff
