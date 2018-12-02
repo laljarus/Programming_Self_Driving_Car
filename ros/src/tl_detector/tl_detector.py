@@ -56,6 +56,7 @@ class TLDetector(object):
         self.waypoints_tree = None
         self.couter = 0
         self.LogEnabled = False
+        #self.classifier = True
 
         base_path = os.path.dirname(os.path.abspath(__file__))
         self.labelfile = os.path.join(base_path, './ImageLog/ImagesLabel.csv')
@@ -170,11 +171,12 @@ class TLDetector(object):
                 writer.writerows(self.ImageData)
 
 
-        """
+        
         #Get classification
+        
+        #prediction = self.light_classifier.get_classification(cv_image)
         return self.light_classifier.get_classification(cv_image)
-        """
-        return light.state
+        #return light.state
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
