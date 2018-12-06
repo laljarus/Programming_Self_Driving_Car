@@ -1,11 +1,28 @@
 import cv2
 import numpy as np
 from styx_msgs.msg import TrafficLight
+from keras.models import load_model
+import h5py
+from keras import __version__ as keras_version
+
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load classifier
-        pass
+        '''
+
+        f = h5py.File('model_test.h5', mode='r')
+        model_version = f.attrs.get('keras_version')
+        keras_version = str(keras_version).encode('utf8')
+
+        if model_version != keras_version:
+            print('You are using Keras version ', keras_version,
+                ', but the model was built using ', model_version)
+        '''
+
+        model = load_model('./light_classification/model_test.h5')
+
+        self.dictClass ={0:TrafficLight.RED,1:TrafficLight.YELLOW,2:TrafficLight.GREEN,3:TrafficLight.UNKNOWN}
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -16,30 +33,20 @@ class TLClassifier(object):
         """
         #TODO implement light color prediction
 
+        state = TrafficLight.UNKNOWN
 
-        hsv_img = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
-        #red
-        RED_MIN = np.array([0, 120, 120],np.uint8)
-        RED_MAX = np.array([10, 255, 255],np.uint8)
-        frame_threshed = cv2.inRange(hsv_img, RED_MIN, RED_MAX)
-        r = cv2.countNonZero(frame_threshed)
-        if r > 50:
-            return TrafficLight.RED
+        
+        image = np.expand_dims(image, axis=0)
 
-        YELLOW_MIN = np.array([40.0/360*255, 120, 120],np.uint8)
-        YELLOW_MAX = np.array([66.0/360*255, 255, 255],np.uint8)
-        frame_threshed = cv2.inRange(hsv_img, YELLOW_MIN, YELLOW_MAX)
-        y = cv2.countNonZero(frame_threshed)
-        if y > 50:
-            return TrafficLight.YELLOW
+        images = np.vstack([image])
 
-        GREEN_MIN = np.array([90.0/360*255, 120, 120],np.uint8)
-        GREEN_MAX = np.array([140.0/360*255, 255, 255],np.uint8)
-        frame_threshed = cv2.inRange(hsv_img, GREEN_MIN, GREEN_MAX)
-        g = cv2.countNonZero(frame_threshed)
-        if g > 50:
-            return TrafficLight.GREEN
+        class_arr = model.predict(images, batch_size=1)
 
+        argmax = np.argmax(class_arr)
+
+        state = dictClass[argmax]
+
+        
         # import ipdb; ipdb.set_trace()
 
         return TrafficLight.UNKNOWN
