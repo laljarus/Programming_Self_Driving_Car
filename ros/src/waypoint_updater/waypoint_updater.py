@@ -101,17 +101,17 @@ class WaypointUpdater(object):
 
             if i == 0:
                 init_vel = wp.twist.twist.linear.x
-                stop_idx = max(self.stopline_idx - closest_idx - 8,0)
+                stop_idx = max(self.stopline_idx - closest_idx - 10,0)
                 init_dist = self.distance(waypoints,i,stop_idx)
                 if init_dist < 1:
                     decel = MAX_DECEL
                 else:
                     decel = min(MAX_DECEL,(init_vel)/init_dist)            
 
-            stop_idx = max(self.stopline_idx - closest_idx - 8,0)
+            stop_idx = max(self.stopline_idx - closest_idx - 10,0)
             dist = self.distance(waypoints,i,stop_idx)
             #vel =  init_vel  + decel*(init_dist - dist)
-            #vel = math.exp(MAX_DECEL*dist)-10
+            #vel = math.exp(MAX_DECEL*dist - 5)
             #rospy.loginfo("velocity:"+str(vel)+"\n")
             vel = decel * dist
             if vel < 1.:
